@@ -44,7 +44,7 @@ The file named 'qos' has 6 sections:
 * `config device` physical interfaces
 * `config rule` QoS matching rules
 
-Each `rule` match some specified traffic and marks it with a `label`
+Each `rule` match some specified traffic and marks it with a `label`.
 
 The `label` is used as trafficid and is a part of a `class` and can be think as a queue.
 
@@ -77,9 +77,9 @@ The example config file called `qos` is structured in the following parts:
   * `wan` uses the `classgroup` referred as `TO_WAN` and is enabled
   * same as `wan` but for `TO_LAN`
 
-* 2 `device` that do the same thing as the `interface`, it's unclear the one needed...added both just to be sure
+* 2 `device` that do the same thing as the `interface`, it's unclear if we need `interface` or `device`... I use both just to be sure
   
-+ some `rule` to match SIP, ICMP, HTTP, HTTPS and torrent traffic and apply a somewhat good QoS.
+* some `rule` to match SIP, ICMP, HTTP, HTTPS and torrent traffic and apply a somewhat good QoS
 
 The reasoning behind the rules are:
 + Everything is **high priority** traffic **BUT**:
@@ -101,7 +101,7 @@ I tried setting up some custom rules following a more universal Linux approach (
 
 ### txqueuelen
 
-You can change le TX queue lenght but it doesn't seem to be important. In any case the commands are:
+You can change the TX queue lenght but it doesn't seem to be important. In any case the commands are:
 * `ifconfig ptm0 txqueuelen 100`
 * `uci commit network`
 * `/etc/init.d/network restart`
