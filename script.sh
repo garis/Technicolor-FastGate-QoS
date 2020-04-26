@@ -2,20 +2,13 @@
 
 #######################################################
 # npshaper v0.1
-# https://forum.dd-wrt.com/phpBB2/viewtopic.php?p=692003
+# Thanks to https://forum.dd-wrt.com/phpBB2/viewtopic.php?p=692003
+# Custom changes for testing purpouses
 #######################################################
 
-# MAYBE (not sure if it's working)
-# uci set wireless.radio_5G.tx_power_adjust='4'
-# uci set wireless.radio_5G.tx_power_overrule_reg='1'
-# uci commit
-# uci show|grep tx
-# then disable and enable wifi on the web ui
-
-
-# Wan link download speed in Kbits (set to 80%-90% of link capacity; 6000 -> 4800)
+# Wan link download speed in Kbits (set to 80%-90% of link capacity)
 DOWNLOAD=33000
-# Wan link upload speed in Kbits (set to 80%-90% of link capacity; 600 -> 480)
+# Wan link upload speed in Kbits (set to 80%-90% of link capacity)
 UPLOAD=8700
 
 # Download burst size in Kbytes
@@ -31,8 +24,7 @@ HOMESERVER_BITTORRENT_PORT2=51414
 
 #######################################################
 
-WAN=vlan_ptm0
-PTM=ptm0
+WAN=ptm0
 LAN=br-lan
 
 DEBUG=0
@@ -44,80 +36,42 @@ then
    
   [ $DEBUG -eq 1 ] && insmod ipt_LOG >&- 2>&-
 
-
    # Remove previous settings
    
    qos -6 stop
    qos -4 stop
    iptables -t mangle -F
    tc qdisc del dev $WAN root >&- 2>&- 
-   tc qdisc del dev $PTM root >&- 2>&- 
    tc qdisc del dev $LAN root >&- 2>&-   
    
    ##### WAN #####
    echo "Setting up Wan interface traffic classes..."
    tc qdisc add dev $WAN root handle 1: htb
      tc class add dev $WAN parent 1: classid 1:1 htb rate ${UPLOAD}kbit ceil ${UPLOAD}kbit burst ${U_BURST}k cburst ${U_BURST}k
-       tc class add dev $WAN parent 1:1 classid 1:10 htb rate $(($UPLOAD*45/100))kbit ceil ${UPLOAD}kbit burst ${U_BURST}k cburst ${U_BURST}k prio 0
-       tc class add dev $WAN parent 1:1 classid 1:20 htb rate $(($UPLOAD*25/100))kbit ceil ${UPLOAD}kbit burst ${U_BURST}k cburst ${U_BURST}k prio 1
-       tc class add dev $WAN parent 1:1 classid 1:30 htb rate $(($UPLOAD*15/100))kbit ceil ${UPLOAD}kbit burst ${U_BURST}k cburst ${U_BURST}k prio 2
-       tc class add dev $WAN parent 1:1 classid 1:40 htb rate $(($UPLOAD*8/100))kbit ceil ${UPLOAD}kbit burst ${U_BURST}k cburst ${U_BURST}k prio 3
-       
-       #echo "Setting up Wan interface traffic htb queues..."
-       #tc class add dev $WAN parent 1:1 classid 1:2 htb rate 2000kbit ceil ${UPLOAD}kbit burst 300k cburst 300k prio 0
-       #tc class add dev $WAN parent 1:1 classid 1:3 htb rate 2000kbit ceil ${UPLOAD}kbit burst 1000k cburst 1000k prio 1
-       #tc class add dev $WAN parent 1:1 classid 1:4 htb rate 3000kbit ceil ${UPLOAD}kbit burst 500k cburst 500k prio 2
-       #tc class add dev $WAN parent 1:1 classid 1:50 htb rate 500kbit ceil ${UPLOAD}kbit burst 100k cburst 100k prio 3
-        
-       #echo "Setting up Wan interface traffic sfq queues..."
-       #tc qdisc add dev $WAN parent 1:2 handle 20: sfq perturb 10
-       #tc qdisc add dev $WAN parent 1:3 handle 30: sfq perturb 10
-       #tc qdisc add dev $WAN parent 1:4 handle 40: sfq perturb 10
-   
-   #echo "Setting up Wan interface traffic flowids..."    
-   #tc filter add dev $WAN parent 1: prio 1 protocol ip handle 1 fw flowid 1:20
-   #tc filter add dev $WAN parent 1: prio 2 protocol ip handle 2 fw flowid 1:30
-   #tc filter add dev $WAN parent 1: prio 3 protocol ip handle 3 fw flowid 1:40
-   #tc filter add dev $WAN parent 1: prio 4 protocol ip handle 4 fw flowid 1:50
+       tc class add dev $WAN parent 1:1 classid 1:10 htb rate $(($UPLOAD*5/10))kbit ceil ${UPLOAD}kbit burst ${U_BURST}k cburst ${U_BURST}k prio 0
+       tc class add dev $WAN parent 1:1 classid 1:20 htb rate $(($UPLOAD*3/10))kbit ceil ${UPLOAD}kbit burst ${U_BURST}k cburst ${U_BURST}k prio 1
+       tc class add dev $WAN parent 1:1 classid 1:30 htb rate $(($UPLOAD*2/10))kbit ceil ${UPLOAD}kbit burst ${U_BURST}k cburst ${U_BURST}k prio 2
+       tc class add dev $WAN parent 1:1 classid 1:40 htb rate $(($UPLOAD*1/10))kbit ceil ${UPLOAD}kbit burst ${U_BURST}k cburst ${U_BURST}k prio 3
+
    tc filter add dev $WAN parent 1: prio 1 protocol ip handle 1 fw flowid 1:10
    tc filter add dev $WAN parent 1: prio 2 protocol ip handle 2 fw flowid 1:20
    tc filter add dev $WAN parent 1: prio 3 protocol ip handle 3 fw flowid 1:30
-   tc filter add dev $WAN parent 1: prio 4 protocol ip handle 4 fw flowid 1:40
-
-   ##### PTM #####
-   echo "Setting up Ptm interface traffic classes..."
-   tc qdisc add dev $PTM root handle 1: htb
-     tc class add dev $PTM parent 1: classid 1:1 htb rate ${UPLOAD}kbit ceil ${UPLOAD}kbit burst ${U_BURST}k cburst ${U_BURST}k
-       tc class add dev $PTM parent 1:1 classid 1:10 htb rate $(($UPLOAD*45/100))kbit ceil ${UPLOAD}kbit burst ${U_BURST}k cburst ${U_BURST}k prio 0
-       tc class add dev $PTM parent 1:1 classid 1:20 htb rate $(($UPLOAD*25/100))kbit ceil ${UPLOAD}kbit burst ${U_BURST}k cburst ${U_BURST}k prio 1
-       tc class add dev $PTM parent 1:1 classid 1:30 htb rate $(($UPLOAD*15/100))kbit ceil ${UPLOAD}kbit burst ${U_BURST}k cburst ${U_BURST}k prio 2
-       tc class add dev $PTM parent 1:1 classid 1:40 htb rate $(($UPLOAD*8/100))kbit ceil ${UPLOAD}kbit burst ${U_BURST}k cburst ${U_BURST}k prio 3
-
-   tc filter add dev $PTM parent 1: prio 1 protocol ip handle 1 fw flowid 1:10
-   tc filter add dev $PTM parent 1: prio 2 protocol ip handle 2 fw flowid 1:20
-   tc filter add dev $PTM parent 1: prio 3 protocol ip handle 3 fw flowid 1:30
-   tc filter add dev $PTM parent 1: prio 4 protocol ip handle 4 fw flowid 1:40   
+   tc filter add dev $WAN parent 1: prio 4 protocol ip handle 4 fw flowid 1:40 
    
    ##### LAN #####
    echo "Setting up Lan interface traffic classes..."
    tc qdisc add dev $LAN root handle 1: htb
      tc class add dev $LAN parent 1: classid 1:1 htb rate ${DOWNLOAD}kbit ceil ${DOWNLOAD}kbit burst ${D_BURST}k cburst ${D_BURST}k
-       #tc class add dev $LAN parent 1:1 classid 1:10 htb rate $(($DOWNLOAD*5/10))kbit ceil ${DOWNLOAD}kbit burst ${D_BURST}k cburst ${D_BURST}k prio 0
-       #tc class add dev $LAN parent 1:1 classid 1:20 htb rate $(($DOWNLOAD*3/10))kbit ceil ${DOWNLOAD}kbit burst ${D_BURST}k cburst ${D_BURST}k prio 1
-       #tc class add dev $LAN parent 1:1 classid 1:30 htb rate $(($DOWNLOAD*2/10))kbit ceil ${DOWNLOAD}kbit burst ${D_BURST}k cburst ${D_BURST}k prio 2
-       #tc class add dev $LAN parent 1:1 classid 1:40 htb rate $(($DOWNLOAD*1/10))kbit ceil ${DOWNLOAD}kbit burst ${D_BURST}k cburst ${D_BURST}k prio 3
-       
-       tc class add dev $LAN parent 1:1 classid 1:10 htb rate $(($DOWNLOAD*5/10))kbit ceil ${DOWNLOAD}kbit burst ${D_BURST}k cburst ${D_BURST}k prio 0       
-       tc class add dev $LAN parent 1:1 classid 1:20 htb rate $(($DOWNLOAD*3/10))kbit ceil ${DOWNLOAD}kbit burst ${D_BURST}k cburst ${D_BURST}k prio 1       
-       tc class add dev $LAN parent 1:1 classid 1:30 htb rate $(($DOWNLOAD*2/10))kbit ceil ${DOWNLOAD}kbit burst ${D_BURST}k cburst ${D_BURST}k prio 2       
-       tc class add dev $LAN parent 1:1 classid 1:40 htb rate $(($DOWNLOAD*1/10))kbit ceil ${DOWNLOAD}kbit burst ${D_BURST}k cburst ${D_BURST}k prio 3       
+       tc class add dev $LAN parent 1:1 classid 1:10 htb rate $(($DOWNLOAD*5/10))kbit ceil ${DOWNLOAD}kbit burst ${D_BURST}k cburst ${D_BURST}k prio 0
+       tc class add dev $LAN parent 1:1 classid 1:20 htb rate $(($DOWNLOAD*3/10))kbit ceil ${DOWNLOAD}kbit burst ${D_BURST}k cburst ${D_BURST}k prio 1
+       tc class add dev $LAN parent 1:1 classid 1:30 htb rate $(($DOWNLOAD*2/10))kbit ceil ${DOWNLOAD}kbit burst ${D_BURST}k cburst ${D_BURST}k prio 2
+       tc class add dev $LAN parent 1:1 classid 1:40 htb rate $(($DOWNLOAD*1/10))kbit ceil ${DOWNLOAD}kbit burst ${D_BURST}k cburst ${D_BURST}k prio 3
+      
    
    tc filter add dev $LAN parent 1: prio 1 protocol ip handle 1 fw flowid 1:10
    tc filter add dev $LAN parent 1: prio 2 protocol ip handle 2 fw flowid 1:20
    tc filter add dev $LAN parent 1: prio 3 protocol ip handle 3 fw flowid 1:30
    tc filter add dev $LAN parent 1: prio 4 protocol ip handle 4 fw flowid 1:40
-   
-   
    
    ######################################## MARK CHAIN ##################################################
    
@@ -130,10 +84,6 @@ then
    # Wan ('upload' traffic) classification chain
    iptables -t mangle -N wan_mark_chain
    iptables -t mangle -A POSTROUTING -o $WAN -j wan_mark_chain
-   
-   # Ptm ('---' traffic) classification chain
-   iptables -t mangle -N ptm_mark_chain
-   iptables -t mangle -A POSTROUTING -o $PTM -j ptm_mark_chain
    
    # Lan ('download' traffic) classification chain
    iptables -t mangle -N lan_mark_chain
@@ -171,7 +121,6 @@ then
    iptables -t mangle -A lan_mark_chain -m mark --mark 0 -p udp --sport $HOMESERVER_BITTORRENT_PORT1 -j MARK --set-mark 4
    iptables -t mangle -A lan_mark_chain -m mark --mark 0 -p udp --dport $HOMESERVER_BITTORRENT_PORT1 -j MARK --set-mark 4
    
-   
    iptables -t mangle -A wan_mark_chain -m mark --mark 0 -p tcp --sport $HOMESERVER_BITTORRENT_PORT2 -j MARK --set-mark 4
    iptables -t mangle -A wan_mark_chain -m mark --mark 0 -p tcp --dport $HOMESERVER_BITTORRENT_PORT2 -j MARK --set-mark 4
    iptables -t mangle -A wan_mark_chain -m mark --mark 0 -p udp --sport $HOMESERVER_BITTORRENT_PORT2 -j MARK --set-mark 4
@@ -185,7 +134,6 @@ then
    
    # Save mark so we track the full connection
    iptables -t mangle -A wan_mark_chain -j CONNMARK --save-mark
-   iptables -t mangle -A ptm_mark_chain -j CONNMARK --save-mark
    iptables -t mangle -A lan_mark_chain -j CONNMARK --save-mark
    
    # ACK packets and suck (connection control) - Express
@@ -203,16 +151,7 @@ then
    # Default (anything else) - Normal
    iptables -t mangle -A wan_mark_chain -m mark --mark 0 -j MARK --set-mark 2
    iptables -t mangle -A lan_mark_chain -m mark --mark 0 -j MARK --set-mark 2
-   
-   
-   #### DO WE NEED THIS ALSO? #####
-   #Chain POSTROUTING (policy ACCEPT 761 packets, 292K bytes)
-   # spkts bytes target     prot opt in     out     source               destination         
-   # 370 31460 wan_mark_chain  all  --  any    vlan_ptm0  anywhere             anywhere            
-   # 0     0 ptm_mark_chain  all  --  any    ptm0    anywhere             anywhere            
-   # 406  261K lan_mark_chain  all  --  any    br-lan  anywhere             anywhere   
-   
-   
+
    ######################################################################################################
    
    echo "Setting up debugging..."
@@ -221,11 +160,6 @@ then
    [ $DEBUG -eq 1 ] && iptables -t mangle -A wan_mark_chain -m mark --mark 2 -j LOG --log-prefix wan_qos_normal::
    [ $DEBUG -eq 1 ] && iptables -t mangle -A wan_mark_chain -m mark --mark 3 -j LOG --log-prefix wan_qos_bulk::
    [ $DEBUG -eq 1 ] && iptables -t mangle -A wan_mark_chain -m mark --mark 4 -j LOG --log-prefix wan_qos_lowbulk::
-   
-   [ $DEBUG -eq 1 ] && iptables -t mangle -A ptm_mark_chain -m mark --mark 1 -j LOG --log-prefix wan_qos_express::
-   [ $DEBUG -eq 1 ] && iptables -t mangle -A ptm_mark_chain -m mark --mark 2 -j LOG --log-prefix wan_qos_normal::
-   [ $DEBUG -eq 1 ] && iptables -t mangle -A ptm_mark_chain -m mark --mark 3 -j LOG --log-prefix wan_qos_bulk::
-   [ $DEBUG -eq 1 ] && iptables -t mangle -A ptm_mark_chain -m mark --mark 4 -j LOG --log-prefix wan_qos_lowbulk::
    
    [ $DEBUG -eq 1 ] && iptables -t mangle -A lan_mark_chain -m mark --mark 1 -j LOG --log-prefix lan_qos_express::
    [ $DEBUG -eq 1 ] && iptables -t mangle -A lan_mark_chain -m mark --mark 2 -j LOG --log-prefix lan_qos_normal::
@@ -238,11 +172,6 @@ then
    iptables -t mangle -A wan_mark_chain -m mark --mark 2 -j RETURN
    iptables -t mangle -A wan_mark_chain -m mark --mark 3 -j RETURN
    iptables -t mangle -A wan_mark_chain -m mark --mark 4 -j RETURN
-   
-   iptables -t mangle -A ptm_mark_chain -m mark --mark 1 -j RETURN   
-   iptables -t mangle -A ptm_mark_chain -m mark --mark 2 -j RETURN   
-   iptables -t mangle -A ptm_mark_chain -m mark --mark 3 -j RETURN   
-   iptables -t mangle -A ptm_mark_chain -m mark --mark 4 -j RETURN   
    
    iptables -t mangle -A lan_mark_chain -m mark --mark 1 -j RETURN
    iptables -t mangle -A lan_mark_chain -m mark --mark 2 -j RETURN
@@ -262,11 +191,6 @@ then
 
    tc -s qdisc ls dev $WAN
    tc -s class ls dev $WAN
-   echo ""
-   echo "--- PTM (---) ---"
-
-   tc -s qdisc ls dev $PTM
-   tc -s class ls dev $PTM
    echo ""
    echo "--- LAN (Download) ---"
 

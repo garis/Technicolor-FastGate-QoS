@@ -1,13 +1,40 @@
 # Technicolor-FastGate-QoS
 
-What can it do:
+Based on the FastGate modem/router provided by Fastweb:
+
+* Product name: Technicolor MediaAccess DGA4131FWB
+* Firmware version: 18.3.n.0439_FW_258_DGA4131
+* Hardware version: VBNT-O
+* Precise firmware version: 18.3.n.0439
+
+It should work also for older versions without any problem.
+
+## What can it do (the good)
 * run multiple torrents client in multiple PCs with no upload limits
-* run multiple upload speedtests in multiple PCs
+* run an upload speedtest
 * run a teamspeak session with no latency issue
 * ...all at the same time
 
-Note that this setup will manage only upload traffic since we can control each packet that will go on the internet link. The download is out of our control since we can only receive and we have no control of that
+Note that this setup will manage only upload traffic since we can control each packet that will go on the internet link. The download is out of our control since we can only receive and we have no control of that.
 
+## TLDR
+
+The `qos` file in this repository is my currently running config feel free to use at your own risk
+
+* Make a copy of the file `/etc/config/qos`
+* Replace or change `/etc/config/qos` with the one inside this repository
+* Run `qos -4 -r reload` and `qos -4 -r reload`
+
+If this seems to not be working use:
+* `qos stop` to clean the rules
+* `iptables -t mangle -F` to really clean the rules
+* `qos start` to recreate the rules
+* `qos -r reload` to reload the rule, useful if you change the config file
+* `iptables -nL -v -x -t mangle` to check the rules (highly verbose output)
+
+
+
+## How (the bad)
 The file named 'qos' has 6 sections:
 
 * `config label` types of traffic
@@ -32,7 +59,7 @@ The example config file called `qos` is structured in the following parts:
   +  `LowP` low priority traffic identified with `trafficid 1`
   +  `NormalP` normal priority traffic identified with `trafficid 2`
   +  `HighP` high priority traffic identified with `trafficid 3`
-  +  `VeryHighP` very high priority traffic identified with `trafficid4`
+  +  `VeryHighP` very high priority traffic identified with `trafficid 4`
 
 * 8 `class`: 4 for WAN/Internet traffic (`W_Q0`,`W_Q1`,`W_Q2`,`W_Q3`) and 4 for LAN/local (`L_Q0`,`L_Q1`,`L_Q2`,`L_Q3` for local traffic):
   
@@ -60,8 +87,21 @@ The reasoning behind the rules are:
   + HTTP and HTTPS are **normal priority** traffic
   + Torrent is **low priority** traffic
 
-This should cover a lot of cases with not too much rules... at least thats the hope.
+This should cover a lot of cases with a basic set of rules... at least thats the hope.
 
-## Details
+## No, really... how? (... and the ugly)
 
-#TODO#
+The Technicolor QoS seems to be working thanks to the kernel module `sch_qos_tch` located in `/lib/modules/4.1.38/sch_qos_tch.ko` and it's not clear to me how it's working.
+
+In any case each interface (or at the least the more relevant ones) are using `sch_qos_tch` as their queue discipline. You can check with `tc qdisc show`.
+
+The QoS controls the traffic based of the marking rules visible in the iptables mangle table. To check them use `iptables -nL -v -x -t mangle`.
+
+I tried setting up some custom rules following a more universal Linux approach (the script to do this is `script.sh` in this repo). The rules themself are working but at soon I apply them to the `ptm0` interface they are ignored... can't understand why.
+
+### txqueuelen
+
+You can change le TX queue lenght but it doesn't seem to be important. In any case the commands are:
+* `ifconfig ptm0 txqueuelen 100`
+* `uci commit network`
+* `/etc/init.d/network restart`
