@@ -20,7 +20,9 @@ Note that this setup will manage only upload traffic since we can control each p
 ## TLDR
 
 The `qosTest.txt` file in this repository was a good test config.
+
 `qosORIGINAL.txt` is the default qos config by Fastweb.
+
 `qos.txt` is my attempt to merge the test config with the default config.
 
 * Make a copy of the file `/etc/config/qos`
