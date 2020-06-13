@@ -1,73 +1,190 @@
-config label 'LowP'
+config label 'Normal_LowP'
         option trafficid '1'
 
-config label 'NormalP'
+config label 'Interactive_NormP'
         option trafficid '2'
 
-config label 'HighP'
+config label 'Network_Control_HighP'
         option trafficid '3'
 
-config label 'VeryHighP'
+config label 'Video_Data_VHighP'
         option trafficid '4'
 
+config label 'Video_Sig'
+        option trafficid '5'
+
+config label 'Management'
+        option dscp 'CS5'
+        option trafficid '6'
+        option pcp '2'
+
+config label 'Voice_Data'
+        option dscp 'CS5'
+        option trafficid '7'
+        option pcp '2'
+
+config label 'Voice_Sig'
+        option dscp 'CS5'
+        option trafficid '8'
+        option pcp '2'
+
+config label 'Multicast'
+        option trafficid '9'
+
+config label 'Boost'
+        option trafficid '10'
+
+config label 'Guest_Data'
+        option tos '0x00'
+        option pcp '0'
+        option trafficid '11'
+
+config label 'Boost_FTP'
+        option trafficid '12'
+
+config label 'Data_SrcIP_Q5'
+        option trafficid '14'
+
+config label 'Data_SrcIP'
+        option trafficid '15'
+
+config label 'Private_Data'
+        option tos '0x00'
+        option pcp '0'
+
 config class 'W_Q0'
-        option priority '1'
+        option priority '0'
         list trafficid '1'
         option max_burst_size '100'
         option min_bit_rate '0'
         option weight '0'
 
 config class 'W_Q1'
-        option priority '2'
+        option priority '1'
         list trafficid '2'
         option max_burst_size '2000'
-        option min_bit_rate '500'
+        option min_bit_rate '0'
         option weight '50'
-        
+
 config class 'W_Q2'
-        option priority '3'
+        option priority '2'
         list trafficid '3'
-        option max_burst_size '2000'
+        option max_burst_size '3000'
         option min_bit_rate '500'
         option weight '100'
-        
+
 config class 'W_Q3'
-        option priority '4'
+        option priority '3'
         list trafficid '4'
-        option max_burst_size '2000'
+        list trafficid '11'
+        option max_burst_size '3000'
+        option min_bit_rate '500'
+        option weight '200'
+
+config class 'W_Q4'
+        option priority '4'
+        list trafficid '10'
+        option max_burst_size '3000'
+        option min_bit_rate '500'
+        option weight '200'
+
+config class 'W_Q5'
+        option priority '5'
+        list trafficid '14'
+        option max_burst_size '3000'
+        option min_bit_rate '500'
+        option weight '200'
+
+config class 'W_Q6'
+        option priority '6'
+        list trafficid '6'
+        list trafficid '12'
+        option max_burst_size '3000'
+        option min_bit_rate '500'
+        option weight '200'
+
+config class 'W_Q7'
+        option priority '7'
+        list trafficid '7'
+        list trafficid '8'
+        option max_burst_size '3000'
         option min_bit_rate '500'
         option weight '200'
 
 config class 'L_Q0'
+        option priority '0'
         list trafficid '1'
-        option priority '1'
         option weight '0'
 
 config class 'L_Q1'
+        option priority '1'
         list trafficid '2'
-        option priority '2'
         option weight '50'
-        
+
 config class 'L_Q2'
+        option priority '2'
         list trafficid '3'
-        option priority '3'
+        list trafficid '9'
+        list trafficid '6'
         option weight '100'
-        
+
 config class 'L_Q3'
+        option priority '3'
         list trafficid '4'
-        option priority '4'
+        list trafficid '5'
+        list trafficid '7'
+        list trafficid '8'
+        list trafficid '10'
         option weight '200'
-        
+
+config class 'WMM_BK_Q0'
+        option priority '0'
+
+config class 'WMM_BK_Q1'
+        option priority '1'
+
+config class 'WMM_BE_Q0'
+        option priority '2'
+
+config class 'WMM_BE_Q1'
+        option priority '3'
+        list trafficid '1'
+        list trafficid '9'
+        list trafficid '10'
+
+config class 'WMM_VI_Q0'
+        option priority '4'
+        list trafficid '2'
+        list trafficid '5'
+
+config class 'WMM_VI_Q1'
+        option priority '5'
+        list trafficid '6'
+        list trafficid '4'
+
+config class 'WMM_VO_Q0'
+        option priority '6'
+        list trafficid '7'
+
+config class 'WMM_VO_Q1'
+        option priority '7'
+        list trafficid '8'
+
 config classgroup 'TO_WAN'
-        option classes 'W_Q0 W_Q1 W_Q2 W_Q3'
-        option policy 'sp'
+        option classes 'W_Q0 W_Q1 W_Q2 W_Q3 W_Q4 W_Q5 W_Q6 W_Q7'
         option default 'W_Q2'
-        
+        option policy 'sp_wrr'
+
 config classgroup 'TO_LAN'
         option classes 'L_Q0 L_Q1 L_Q2 L_Q3'
+        option default 'L_Q1'
         option policy 'sp'
-        option default 'L_Q2'
-  
+
+config classgroup 'TO_WLAN'
+        option classes 'WMM_BE_Q0 WMM_BK_Q0 WMM_BK_Q1 WMM_BE_Q1 WMM_VI_Q0 WMM_VI_Q1 WMM_VO_Q0 WMM_VO_Q1'
+        option default 'WMM_BE_Q0'
+        option policy 'sp'
+
 config interface 'lan'
         option classgroup 'TO_LAN'
         option enable '1'
@@ -75,87 +192,238 @@ config interface 'lan'
 config interface 'wan'
         option classgroup 'TO_WAN'
         option enable '1'
-        
+
 config device 'atm0'
         option classgroup 'TO_WAN'
         option enable '1'
-        
+
 config device 'ptm0'
         option classgroup 'TO_WAN'
         option enable '1'
-        
+
+config device 'eth4'
+        option classgroup 'TO_WAN'
+        option enable '1'
+
+config device 'veip0'
+        option classgroup 'TO_WAN'
+        option enable '1'
+
+config device 'wl0'
+        option classgroup 'TO_WLAN'
+        option enable '1'
+
+config device 'wl1'
+        option classgroup 'TO_WLAN'
+        option enable '1'
+
 config rule
-        option order '1'
-        option target 'VeryHighP'
+        option order '6'
+        option target 'Interactive_NormP'
+        list srcif 'lan'
+        option proto 'tcp'
+        option dstports '25,80,81,109,110,143,201,202,203,204,205,206,220,387'
+
+config rule
+        option order '6'
+        option target 'Interactive_NormP'
+        list srcif 'lan'
+        option proto 'udp'
+        option dstports '25,80,81,109,110,143,201,202,203,204,205,206,220,387'
+
+config rule
+        option order '6'
+        option target 'Interactive_NormP'
+        list srcif 'lan'
+        option proto 'tcp'
+        option dstports '443,445,993,995,1701,1935,3074,3478,3479,3480,3658,8080,8081,37483'
+
+config rule
+        option order '6'
+        option target 'Interactive_NormP'
+        list srcif 'lan'
+        option proto 'udp'
+        option dstports '443,445,993,995,1701,1935,3074,3478,3479,3480,3658,8080,8081,37483'
+
+config rule
+        option order '7'
+        option target 'Boost_FTP'
+        list srcif 'lan'
+        option proto 'tcp'
+        option mark '0x0000d000/0x0000f800'
+        option dstports '21'
+
+config rule
+        option order '6'
+        option target 'Interactive_NormP'
+        list srcif 'lan'
+        option proto 'tcp'
+        option mark '!0x0000d000/0x0000f800'
+        option dstports '21'
+
+config rule
+        option order '6'
+        option target 'Network_Control_HighP'
+        option proto 'icmp'
+
+config rule
+        option order '6'
+        option target 'Network_Control_HighP'
+        option proto 'igmp'
+
+config rule
+        option order '6'
+        option target 'Network_Control_HighP'
+        option dstports '22,23,53,67,68,123'
+        option proto 'tcp'
+
+config rule
+        option order '6'
+        option target 'Network_Control_HighP'
+        option dstports '22,23,53,67,68,123,500,4500'
+        option proto 'udp'
+
+config rule
+        option order '6'
+        option target 'Network_Control_HighP'
+        option proto 'esp'
+
+config rule
+        option order '6'
+        option target 'Network_Control_HighP'
+        option proto 'ah'
+
+config rule
+        option order '6'
+        option target 'Network_Control_HighP'
+        option proto 'gre'
+
+config rule
+        option order '6'
+        option target 'Video_Sig'
+        option proto 'tcp'
+        option dstports '554'
+
+config rule
+        option order '6'
+        option target 'Video_Data_VHighP'
+        option helper 'rtsp'
+        option reclassify '1'
+
+config rule
+        option order '6'
+        option target 'Interactive_NormP'
+        option mark '0x00009000/0x0000f800'
+        option helper 'ftp'
+        option reclassify '1'
+
+config rule
+        option order '6'
+        option target 'Boost'
+        option mark '0x0000e000/0x0000f800'
+        option helper 'ftp'
+        option reclassify '1'
+
+config rule
+        option order '6'
+        option target 'Voice_Sig'
+        option dstports '5060,50601'
+        option srcif 'loopback'
+        option proto 'tcp'
+
+config rule
+        option order '6'
+        option target 'Voice_Sig'
         option dstports '5060,50601'
         option srcif 'loopback'
         option proto 'udp'
 
 config rule
         option order '1'
-        option target 'VeryHighP'
-        option proto 'udp'        
+        option target 'Multicast'
+        option dsthost '224.0.0.0/4'
 
-config rule                                 
-        option order '1'                    
-        option target 'VeryHighP'           
-        option dstports '22'        
+config rule
+        option order '1'
+        option target 'Multicast'
+        option dsthost 'ff00::/8'
+
+config host
+        option target 'Management'
+        option path '/usr/sbin/odhcpc'
+
+config host
+        option target 'Management'
+        option path '/usr/bin/cwmpd'
+
+config host
+        option target 'Data_SrcIP'
+        option path '/usr/bin/tr143_diag'
+
+config host
+        option target 'Data_SrcIP_Q5'
+        option path '/sbin/yaft'
+
+config host
+        option target 'Data_SrcIP_Q5'
+        option path '/bin/yaft'
+
+config rule
+        option order '6'
+        option target 'Management'
+        list srcif 'loopback'
+        list dstif 'wan'
+        option srcports '23'
         option proto 'tcp'
 
 config rule
-        option order '2'
-        option target 'VeryHighP'
-        option proto 'icmp'
+        option order '6'
+        option target 'Management'
+        list srcif 'loopback'
+        list dstif 'mgmt'
+        option srcports '23'
+        option proto 'tcp'
 
 config rule
-        option order '2'
-        option target 'VeryHighP'
-        option proto 'igmp'
+        option order '4'
+        option srcif 'Guest'
+        option target 'Guest_Data'
+
+config rule
+        option order '4'
+        option srcif 'lan'
+        option target 'Private_Data'
+
+config rule
+        option order '6'
+        option target 'Voice_Data'
+        list srcif 'loopback'
+        list dscp 'CS6'
+
+config reclassify 'gre'
+        option target 'Interactive_NormP'
+        option proto '47'
         
 config rule
-        option order '3'
-        option target 'NormalP'
-        option srcports '80,443,8000,8080,8081'
-        option proto 'tcp'
-
-config rule
-        option order '3'
-        option target 'NormalP'
-        option dstports '80,443,8000,8080,8081'
-        option proto 'tcp'
-
-config rule
-        option order '3'
-        option target 'NormalP'
-        option srcports '80,443,8000,8080,8081'
-        option proto 'udp'
-
-config rule
-        option order '3'
-        option target 'NormalP'
-        option dstports '80,443,8000,8080,8081'
-        option proto 'udp'
-        
-config rule
-        option order '3'
-        option target 'LowP'
+        option order '6'
+        option target 'Normal_LowP'
         option srcports '51413,51414'
         option proto 'udp'
 
 config rule
-        option order '3'
-        option target 'LowP'
+        option order '6'
+        option target 'Normal_LowP'
         option dstports '51413,51414'
         option proto 'udp'
         
 config rule
-        option order '3'
-        option target 'LowP'
+        option order '6'
+        option target 'Normal_LowP'
         option srcports '51413,51414'
         option proto 'tcp'
 
 config rule
-        option order '3'
-        option target 'LowP'
+        option order '6'
+        option target 'Normal_LowP'
         option dstports '51413,51414'
         option proto 'tcp'
